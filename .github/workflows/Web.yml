@@ -1,0 +1,44 @@
+name: Deploy Cash Rocket Web
+
+on:
+  push:
+    branches:
+      - master  # Trigger on pushes to the main branch
+  pull_request:
+    branches:
+      - master  # Trigger on pull requests to the main branch
+  workflow_dispatch:  # Enable manual triggering
+
+jobs:
+  deploy-web:
+    name: Deploy Web Version
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'  # Run on push or manual dispatch
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.2'  # Use Flutter version that satisfies pubspec.yaml
+          channel: 'stable'
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Step 4: Build the web app
+      - name: Build Web
+        run: flutter build web --release --base-href="/cash_rocket/"
+
+      # Step 5: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/web
+          destination_dir: .  # Deploy to the root of the gh-pages branch
